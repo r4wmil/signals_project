@@ -1,7 +1,7 @@
 % Input values
-N = 10000;
-EbNo = 0:1:12; % Energy/bit to noise power
-%TODO (later): trials
+N = 30000;
+EbNo = 0:1:10; % Energy/bit to noise power
+trials = 10;
 trel = poly2trellis(3, [5 7]);
 traceback = 5 * 3;
 
@@ -10,7 +10,14 @@ data = randi([0, 1], N, 1);
 err_unc = zeros(size(EbNo));
 err_cod = zeros(size(EbNo));
 for i = 1:length(EbNo)
-    [err_unc(i), err_cod(i)] = sim_conv2vit(data, trel, traceback, EbNo(i));
+    for t = 1:trials
+        eu = sim_noise(data, trel, traceback, EbNo(i));
+        ec = sim_conv2vit(data, trel, traceback, EbNo(i));
+        err_unc(i) = err_unc(i) + eu;
+        err_cod(i) = err_cod(i) + ec;
+    end
+    err_unc(i) = err_unc(i) / trials;
+    err_cod(i) = err_cod(i) / trials;
 end
 
 % Plotting
@@ -26,7 +33,7 @@ legend('Uncoded', 'Convolutional Coded');
 
 % Functions
 
-function [err_unc, err_cod] = sim_conv2vit(data, trel, tb, EbNo)
+function err_unc = sim_noise(data, trel, tb, EbNo)
     % Uncoded
     snr = EbNo + 10 * log10(1); % Signal/Noise
     snr = 10^(snr/10);
@@ -34,9 +41,11 @@ function [err_unc, err_cod] = sim_conv2vit(data, trel, tb, EbNo)
     data_noise = awgn(modulated, snr);
     data_noise = round(data_noise);
     data_noise = max(-1, min(1, data_noise));
-    data_noise >= 0;
+    data_noise = data_noise >= 0;
     err_unc = mean(data ~= data_noise);
-    
+end
+
+function err_cod = sim_conv2vit(data, trel, tb, EbNo)
     % Coded
     k = log2(trel.numInputSymbols);
     n = log2(trel.numOutputSymbols);
