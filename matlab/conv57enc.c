@@ -2,9 +2,12 @@
 #include <stdio.h>
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
-    double* input_array = mxGetPr(prhs[0]);
-    mwSize input_array_len = mxGetNumberOfElements(prhs[0]);
-    for (mwSize i = 0; i < input_array_len; i++) {
-        printf("%lf\n", input_array[i]);
+    if (nrhs < 1) { mexErrMsgTxt("Input array required"); }
+    if (!mxIsLogical(prhs[0])) { mexErrMsgTxt("Input array must be boolean"); }
+    bool* inp = mxGetLogicals(prhs[0]);
+    mwSize inp_len = mxGetNumberOfElements(prhs[0]);
+    for (mwSize i = 0; i < inp_len; i++) {
+        printf("%d", inp[i]);
     }
+    printf("\n");
 }
