@@ -1,4 +1,4 @@
 ```
 setenv('MW_MINGW64_LOC', 'C:\mingw64')
-mex test.c
+conv57_impl_test
 ```
