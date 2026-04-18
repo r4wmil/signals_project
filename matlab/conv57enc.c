@@ -1,15 +1,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-size_t enc_len(size_t l) {
-	return (l - 2) * 2;
-}
+#define ENC_LEN(_l) (((_l) - 2) * 2)
 
 void enc(bool* d, size_t dl, size_t ol, double* or, double* oi) {
 	size_t j = 0;
 	for (size_t i = 0; i < dl - 2; i++) {
-		or[j + 0] = d[i + 0]            ^ d[i + 2];
-		or[j + 1] = d[i + 0] ^ d[i + 1] ^ d[i + 2];
+		or[j + 0] = (double)(d[i + 0]            ^ d[i + 2]) * 2 - 1;
+		or[j + 1] = (double)(d[i + 0] ^ d[i + 1] ^ d[i + 2]) * 2 - 1;
+		oi[j + 0] = 0;
+		oi[j + 1] = 0;
 		j += 2;
 	}
 }
@@ -29,5 +29,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	enc(inp, inp_len, out_len, out_real, out_imag);
 }
 #else
-#error "Unimplemented."
+int main() {
+	bool inp[] = {0,0,0,1,1,0,1,0,0,0};
+	size_t inp_len = sizeof(inp)/sizeof(*inp);
+	const size_t out_len = ENC_LEN(inp_len);
+	double out_real[out_len];
+	double out_imag[out_len];
+	enc(inp, inp_len, out_len, out_real, out_imag);
+	for (size_t i = 0; i < out_len; i++) {
+		printf("(%.02lf %.02lf), ", out_real[i], out_imag[i]);
+	}
+	printf("\n");
+}
 #endif /* MATLAB_MEX_FILE */
