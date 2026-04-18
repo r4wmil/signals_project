@@ -2,13 +2,11 @@
 #include <stdio.h>
 
 void enc(bool* d, size_t dl, size_t ol, double* or, double* oi) {
-	//for (size_t i = 0; i < dl; i++) {
-	//	printf("%d", d[i]);
-	//}
-	//printf("\n");
-	for (size_t i = 0; i < ol; i++) {
-		or[i] = +(double)i;
-		oi[i] = -(double)i;
+	size_t j = 0;
+	for (size_t i = 0; i < dl - 2; i++) {
+		or[j + 0] = d[i + 0]            ^ d[i + 2];
+		or[j + 1] = d[i + 0] ^ d[i + 1] ^ d[i + 2];
+		j += 2;
 	}
 }
 
