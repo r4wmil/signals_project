@@ -29,6 +29,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	enc(inp, inp_len, out_len, out_real, out_imag);
 }
 #else
+#define LOG_COMPLEX(real_, imag_, len_) \
+	do { \
+		for (size_t i = 0; i < (len_); i++) { \
+			printf("(%.02lf %.02lf), ", (real_)[i], (imag_)[i]); \
+		} \
+		printf("\n"); \
+	} while(0)
 int main() {
 	bool inp[] = {0,0,0,1,1,0,1,0,0,0};
 	size_t inp_len = sizeof(inp)/sizeof(*inp);
@@ -36,9 +43,6 @@ int main() {
 	double out_real[out_len];
 	double out_imag[out_len];
 	enc(inp, inp_len, out_len, out_real, out_imag);
-	for (size_t i = 0; i < out_len; i++) {
-		printf("(%.02lf %.02lf), ", out_real[i], out_imag[i]);
-	}
-	printf("\n");
+	LOG_COMPLEX(out_real, out_imag, out_len);
 }
 #endif /* MATLAB_MEX_FILE */
