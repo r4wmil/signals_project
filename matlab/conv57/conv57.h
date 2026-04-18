@@ -7,6 +7,8 @@
 
 #define ENC_LEN(_l) (((_l) - 2) * 2)
 
+#define DEC_LEN(_l) ((_l) >= 2 ? (2 + (_l) / 2) : 0)
+
 #define LOG_BINARY(arr_, len_) \
 	do { \
 		for (size_t i = 0; i < (len_); i++) { \
