@@ -1,0 +1,3 @@
+#define CONV57_IMPLEMENTATION
+#include "conv57.h"
+#undef CONV57_IMPLEMENTATION
