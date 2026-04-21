@@ -10,8 +10,10 @@ int main() {
 	double enc_real[enc_len];
 	double enc_imag[enc_len];
 	enc(inp, inp_len, enc_len, enc_real, enc_imag);
-	//enc_real[3] = 0;
+	enc_real[3] = -1.00;
+	enc_real[7] = +1.00;
 	LOG_COMPLEX(enc_real, enc_imag, enc_len);
-	printf("ok=%d\n", dec_no_err(enc_real, enc_imag, enc_len, out));
+	//printf("ok=%d\n", dec_no_err(enc_real, enc_imag, enc_len, out));
+	dec_hard(enc_real, enc_imag, enc_len, out);
 	LOG_BINARY(out, out_len);
 }
