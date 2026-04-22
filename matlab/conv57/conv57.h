@@ -78,14 +78,14 @@ bool dec_no_err(double* dr, double* di, size_t dl, bool* o) {
 	}
 
 bool dec_hard(double* dr, double* di, size_t dl, bool* o) {
-	// TODO: 1 less than dl / 2
-	uint32_t* trw = calloc(dl * 4,  sizeof(*trw));
-	uint32_t* trl = malloc(dl * 4 * sizeof(*trl));
-	for (size_t i = 0; i < dl * 4; i++) {
+	// TODO: separate trellis
+	uint32_t* trw = calloc((dl / 2) * 4,  sizeof(*trw));
+	uint32_t* trl = malloc((dl / 2) * 4 * sizeof(*trl));
+	for (size_t i = 0; i < (dl / 2) * 4; i++) {
 		trl[i] = INT_MAX;
 	}
 	trl[0] = 0;
-	for (size_t i = 0; i < dl / 2 - 1; i++) {
+	for (size_t i = 0; i < (dl / 2) - 1; i++) {
 		uint32_t curr = ((dr[(i + 1) * 2 + 0] > 0) << 1) | (dr[(i + 1) * 2 + 1] > 0);
 		for (uint32_t s = 0; s < 4; s++) {
 			size_t j = i * 2;
@@ -110,7 +110,7 @@ bool dec_hard(double* dr, double* di, size_t dl, bool* o) {
 			}
 		}
 	}
-	for (size_t i = dl / 2 - 1; i != 0; i--) {
+	for (size_t i = (dl / 2) - 1; i != 0; i--) {
 		size_t k = i * 4 + 0;
 		uint32_t w = trw[k];
 		uint32_t l = trl[k];
@@ -123,7 +123,7 @@ bool dec_hard(double* dr, double* di, size_t dl, bool* o) {
 		}
 		o[i] = (w >> 2) & 0x1;
 	}
-	LOG_TREL(trw, trl, 4, dl);
+	LOG_TREL(trw, trl, 4, dl / 2);
 	return true;
 }
 
