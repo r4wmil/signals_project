@@ -7,13 +7,10 @@ int main() {
 	size_t out_len = sizeof(out)/sizeof(*out);
 	LOG_BINARY(inp, inp_len);
 	const size_t enc_len = ENC_LEN(inp_len);
-	double enc_real[enc_len];
-	double enc_imag[enc_len];
-	enc(inp, inp_len, enc_len, enc_real, enc_imag);
-	enc_real[3] = -1.00;
-	enc_real[7] = +1.00;
-	LOG_COMPLEX(enc_real, enc_imag, enc_len);
+	bool enc[enc_len];
+	enc_hard(inp, inp_len, enc);
+	LOG_BINARY(enc, enc_len);
 	//printf("ok=%d\n", dec_no_err(enc_real, enc_imag, enc_len, out));
-	dec_hard(enc_real, enc_imag, enc_len, out);
+	dec_hard(enc, enc_len, out);
 	LOG_BINARY(out, out_len);
 }
