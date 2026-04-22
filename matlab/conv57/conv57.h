@@ -29,6 +29,7 @@
 
 void enc(bool* d, size_t dl, size_t ol, double* or, double* oi);
 bool dec_no_err(double* dr, double* di, size_t dl, bool* o);
+bool dec_hard(double* dr, double* di, size_t dl, bool* o);
 
 #endif /* CONV57_H_ */
 
