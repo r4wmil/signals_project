@@ -122,7 +122,7 @@ bool dec_hard(bool* d, size_t dl, bool* o) {
 		}
 		o[i] = (w >> 2) & 0x1;
 	}
-	LOG_TREL(trw, trl, 4, dl / 2);
+	//LOG_TREL(trw, trl, 4, dl / 2);
 	return true;
 }
 
