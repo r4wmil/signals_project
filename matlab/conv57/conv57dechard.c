@@ -10,5 +10,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	size_t out_len = DEC_LEN(inp_len);
 	plhs[0] = mxCreateLogicalMatrix(1, out_len);
 	bool* out = mxGetLogicals(plhs[0]);
-	dec_hard(inp, inp_len, out);
+	// TODO: return as matrix
+	trel_t trel = {0};
+	dec_hard(inp, inp_len, &trel, out);
 }

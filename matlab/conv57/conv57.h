@@ -6,6 +6,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <assert.h>
+
+typedef struct trel_t {
+	uint32_t* window;
+	uint32_t* distance;
+	size_t width;
+	size_t height;
+} trel_t;
 
 #define ENC_LEN(_l) (((_l) - 2) * 2)
 
@@ -29,7 +37,7 @@
 
 void enc_hard(bool* d, size_t dl, bool* o);
 bool dec_no_err(bool* d, size_t dl, bool* o);
-bool dec_hard(bool* d, size_t dl, bool* o);
+bool dec_hard(bool* d, size_t dl, trel_t* trel, bool* o);
 
 #endif /* CONV57_H_ */
 
@@ -63,66 +71,75 @@ bool dec_no_err(bool* d, size_t dl, bool* o) {
 	return true;
 }
 
-#define LOG_TREL(trw_, trl_, s_, l_) \
-	for (size_t s = 0; s < (s_); s++) { \
-		for (size_t t = 0; t < (l_); t++) { \
-			size_t i = t * (s_) + s; \
-			if (trl[i] == INT_MAX) { \
+#define LOG_TREL(tr_) \
+	for (size_t s = 0; s < (tr_).height; s++) { \
+		for (size_t t = 0; t < (tr_).width; t++) { \
+			size_t i = t * (tr_).height + s; \
+			if ((tr_).distance[i] == INT_MAX) { \
 				printf("      "); \
 				continue; \
 			} \
-			printf("%01lx(%02lu) ", (trw_)[i] % 100, trl[i] % 100); \
+			printf("%01lx(%02lu) ", (tr_).window[i] % 100, (tr_).distance[i] % 100); \
 		} \
 		printf("\n"); \
 	}
 
-bool dec_hard(bool* d, size_t dl, bool* o) {
-	// TODO: separate trellis
-	uint32_t* trw = calloc((dl / 2) * 4,  sizeof(*trw));
-	uint32_t* trl = malloc((dl / 2) * 4 * sizeof(*trl));
-	for (size_t i = 0; i < (dl / 2) * 4; i++) {
-		trl[i] = INT_MAX;
+trel_t trel_init(size_t width, size_t height) {
+	trel_t trel = {0};
+	trel.width = width;
+	trel.height = height;
+	trel.window = calloc(trel.width * trel.height,  sizeof(*trel.window));
+	trel.distance = malloc(trel.width * trel.height * sizeof(*trel.distance));
+	for (size_t i = 0; i < trel.width * trel.height; i++) {
+		trel.distance[i] = INT_MAX;
 	}
-	trl[0] = 0;
-	for (size_t i = 0; i < (dl / 2) - 1; i++) {
+	assert(trel.window);
+	assert(trel.distance);
+	return trel;
+}
+
+bool dec_hard(bool* d, size_t dl, trel_t* _trel, bool* o) {
+	trel_t trel = trel_init(dl / 2, 4);
+	trel.distance[0] = 0;
+	for (size_t i = 0; i < trel.width - 1; i++) {
 		uint32_t curr = (d[(i + 1) * 2 + 0] << 1) | d[(i + 1) * 2 + 1];
-		for (uint32_t s = 0; s < 4; s++) {
+		for (uint32_t s = 0; s < trel.height; s++) {
 			size_t j = i * 2;
-			size_t k = i * 4 + s;
-			if (trl[k] == INT_MAX) { continue; }
-			uint32_t w = trw[k];
+			size_t k = i * trel.height + s;
+			if (trel.distance[k] == INT_MAX) { continue; }
+			uint32_t w = trel.window[k];
 			uint32_t w0 = ((w << 1) | 0x0) & 0x7;
 			uint32_t w1 = ((w << 1) | 0x1) & 0x7;
 			uint32_t s0 = (__builtin_parity(w0 & 0x5) << 1) | __builtin_parity(w0 & 0x7);
 			uint32_t s1 = (__builtin_parity(w1 & 0x5) << 1) | __builtin_parity(w1 & 0x7);
-			size_t k0 = (i + 1) * 4 + s0;
-			size_t k1 = (i + 1) * 4 + s1;
-			uint32_t n0 = trl[k] + (curr != s0);
-			if (n0 < trl[k0]) {
-				trw[k0] = w0;
-				trl[k0] = n0;
+			size_t k0 = (i + 1) * trel.height + s0;
+			size_t k1 = (i + 1) * trel.height + s1;
+			uint32_t n0 = trel.distance[k] + (curr != s0);
+			if (n0 < trel.distance[k0]) {
+				trel.window[k0] = w0;
+				trel.distance[k0] = n0;
 			}
-			uint32_t n1 = trl[k] + (curr != s1);
-			if (n1 < trl[k1]) {
-				trw[k1] = w1;
-				trl[k1] = n1;
+			uint32_t n1 = trel.distance[k] + (curr != s1);
+			if (n1 < trel.distance[k1]) {
+				trel.window[k1] = w1;
+				trel.distance[k1] = n1;
 			}
 		}
 	}
-	for (size_t i = (dl / 2) - 1; i != 0; i--) {
-		size_t k = i * 4 + 0;
-		uint32_t w = trw[k];
-		uint32_t l = trl[k];
-		for (uint32_t s = 0; s < 4; s++) {
-			size_t p = i * 4 + s;
-			if (trl[p] < l) {
-				w = trw[p];
-				l = trl[p];
+	for (size_t i = trel.width - 1; i != 0; i--) {
+		size_t k = i * trel.height + 0;
+		uint32_t w = trel.window[k];
+		uint32_t l = trel.distance[k];
+		for (uint32_t s = 0; s < trel.height; s++) {
+			size_t p = i * trel.height + s;
+			if (trel.distance[p] < l) {
+				w = trel.window[p];
+				l = trel.distance[p];
 			}
 		}
 		o[i] = (w >> 2) & 0x1;
 	}
-	//LOG_TREL(trw, trl, 4, dl / 2);
+	*_trel = trel;
 	return true;
 }
 

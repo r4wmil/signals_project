@@ -11,6 +11,8 @@ int main() {
 	enc_hard(inp, inp_len, enc);
 	LOG_BINARY(enc, enc_len);
 	//printf("ok=%d\n", dec_no_err(enc_real, enc_imag, enc_len, out));
-	dec_hard(enc, enc_len, out);
+	trel_t trel;
+	dec_hard(enc, enc_len, &trel, out);
 	LOG_BINARY(out, out_len);
+	LOG_TREL(trel);
 }
