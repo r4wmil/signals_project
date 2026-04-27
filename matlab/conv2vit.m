@@ -39,14 +39,23 @@ xlabel('Eb/No');
 ylabel('Bit Error Rate');
 legend('Uncoded', 'Convolutional (vitdec)' , 'Convolutional (our)');
 
-% Functions
-% TODO: refactor noise gen
+% Signal/Noise
+function snr = get_snr(trel, EbNo)
+    if isobject(trel)
+        k = log2(trel.numInputSymbols);
+        n = log2(trel.numOutputSymbols);
+        conv_rate = k / n;
+        K = 1; % BPSK
+        snr = EbNo + 10 * log10(conv_rate * K);
+    else
+        snr = EbNo;
+    end
+end
+
 function err_unc = sim_noise(data, EbNo)
     % Uncoded
-    snr = EbNo + 10 * log10(1); % Signal/Noise
-    snr = 10^(snr/10);
     modulated = 2 * data - 1;
-    data_noise = awgn(modulated, snr);
+    data_noise = awgn(modulated, get_snr(0, EbNo));
     data_noise = round(data_noise);
     data_noise = max(-1, min(1, data_noise));
     data_noise = data_noise >= 0;
@@ -55,14 +64,9 @@ end
 
 function err_cod = sim_conv2vit(data, trel, tb, EbNo)
     % Coded
-    k = log2(trel.numInputSymbols);
-    n = log2(trel.numOutputSymbols);
-    conv_rate = k / n;
-    snr = EbNo + 10 * log10(1 * conv_rate);
-    snr = 10^(snr/10);
     data_conv = convenc(data, trel);
     modulated = 2 * data_conv - 1;
-    data_conv_noise = awgn(modulated, snr);
+    data_conv_noise = awgn(modulated, get_snr(trel, EbNo));
     data_conv_noise = round(data_conv_noise);
     data_conv_noise = max(-1, min(1, data_conv_noise));
     data_conv_noise = data_conv_noise >= 0;
@@ -72,15 +76,10 @@ end
 
 function err_cod = sim_conv57(data, trel, EbNo)
     % Coded (our)
-    k = log2(trel.numInputSymbols);
-    n = log2(trel.numOutputSymbols);
-    conv_rate = k / n;
-    snr = EbNo + 10 * log10(1 * conv_rate);
-    snr = 10^(snr/10);
     data_padded = [zeros(3,1); data; zeros(3,1)];
     data_conv = convenc(data_padded, trel);
     modulated = 2 * data_conv - 1;
-    data_conv_noise = awgn(modulated, snr);
+    data_conv_noise = awgn(modulated, get_snr(trel, EbNo));
     %data_conv_noise = modulated;
     data_conv_noise = round(data_conv_noise);
     data_conv_noise = max(-1, min(1, data_conv_noise));
