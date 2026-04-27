@@ -10,6 +10,8 @@ int main() {
 	bool enc[enc_len];
 	enc_hard(inp, inp_len, enc);
 	LOG_BINARY(enc, enc_len);
+	enc[7] = !enc[5];
+	LOG_BINARY(enc, enc_len);
 	//printf("ok=%d\n", dec_no_err(enc_real, enc_imag, enc_len, out));
 	trel_t trel;
 	dec_hard(enc, enc_len, &trel, out);

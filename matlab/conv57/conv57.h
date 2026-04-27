@@ -11,6 +11,7 @@
 typedef struct trel_t {
 	uint32_t* window;
 	uint32_t* distance;
+	uint32_t* backtrack;
 	size_t width;
 	size_t height;
 } trel_t;
@@ -90,6 +91,7 @@ trel_t trel_init(size_t width, size_t height) {
 	trel.height = height;
 	trel.window = calloc(trel.width * trel.height,  sizeof(*trel.window));
 	trel.distance = malloc(trel.width * trel.height * sizeof(*trel.distance));
+	trel.backtrack = calloc(trel.width * trel.height,  sizeof(*trel.backtrack));
 	for (size_t i = 0; i < trel.width * trel.height; i++) {
 		trel.distance[i] = INT_MAX;
 	}
@@ -110,34 +112,40 @@ bool dec_hard(bool* d, size_t dl, trel_t* _trel, bool* o) {
 			uint32_t w = trel.window[k];
 			uint32_t w0 = ((w << 1) | 0x0) & 0x7;
 			uint32_t w1 = ((w << 1) | 0x1) & 0x7;
-			uint32_t s0 = (__builtin_parity(w0 & 0x5) << 1) | __builtin_parity(w0 & 0x7);
-			uint32_t s1 = (__builtin_parity(w1 & 0x5) << 1) | __builtin_parity(w1 & 0x7);
-			size_t k0 = (i + 1) * trel.height + s0;
-			size_t k1 = (i + 1) * trel.height + s1;
-			uint32_t n0 = trel.distance[k] + (curr != s0);
+			uint32_t c0 = (__builtin_parity(w0 & 0x5) << 1) | __builtin_parity(w0 & 0x7);
+			uint32_t c1 = (__builtin_parity(w1 & 0x5) << 1) | __builtin_parity(w1 & 0x7);
+			size_t k0 = (i + 1) * trel.height + (w0 & 0x3);
+			size_t k1 = (i + 1) * trel.height + (w1 & 0x3);
+			uint32_t n0 = trel.distance[k] + __builtin_popcount(curr ^ c0);
+			//uint32_t n0 = trel.distance[k] + (curr != c0);
 			if (n0 < trel.distance[k0]) {
 				trel.window[k0] = w0;
 				trel.distance[k0] = n0;
+				trel.backtrack[k0] = s;
 			}
-			uint32_t n1 = trel.distance[k] + (curr != s1);
+			uint32_t n1 = trel.distance[k] + __builtin_popcount(curr ^ c1);
+			//uint32_t n1 = trel.distance[k] + (curr != c1);
 			if (n1 < trel.distance[k1]) {
 				trel.window[k1] = w1;
 				trel.distance[k1] = n1;
+				trel.backtrack[k1] = s;
 			}
 		}
 	}
-	for (size_t i = trel.width - 1; i != 0; i--) {
-		size_t k = i * trel.height + 0;
-		uint32_t w = trel.window[k];
-		uint32_t l = trel.distance[k];
-		for (uint32_t s = 0; s < trel.height; s++) {
-			size_t p = i * trel.height + s;
-			if (trel.distance[p] < l) {
-				w = trel.window[p];
-				l = trel.distance[p];
-			}
+	uint32_t l = INT_MAX;
+	uint32_t b = 0;
+	for (uint32_t s = 0; s < trel.height; s++) {
+		size_t p = (trel.width - 1) * trel.height + s;
+		if (trel.distance[p] < l) {
+			b = trel.backtrack[p];
+			l = trel.distance[p];
 		}
+	}
+	for (size_t i = trel.width - 2; i != 0; i--) {
+		size_t k = i * trel.height + b;
+		uint32_t w = trel.window[k];
 		o[i] = (w >> 2) & 0x1;
+		b = trel.backtrack[k];
 	}
 	*_trel = trel;
 	return true;
