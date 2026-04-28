@@ -3,7 +3,7 @@ run('conv57/compile.m');
 
 % Input values
 N = 30000;
-EbNo = 0:1:15; % Energy/bit to noise power
+EbNo = 0:1:10; % Energy/bit to noise power
 trials = 10;
 trel = poly2trellis(3, [5 7]);
 traceback = 5 * 3;
@@ -33,6 +33,7 @@ hold on;
 semilogy(EbNo, err_unc, 'b-o', 'LineWidth', 2);
 semilogy(EbNo, err_cod, 'r-s', 'LineWidth', 2);
 semilogy(EbNo, err_cod_our, 'g-s', 'LineWidth', 2);
+set(gca, 'YScale', 'log');
 hold off;
 grid on;
 xlabel('Eb/No');
