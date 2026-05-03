@@ -1,5 +1,4 @@
-%addpath('conv57');
-%run('conv57/compile.m');
+addpath('conv57');
 
 % Input values
 N = 10000;
