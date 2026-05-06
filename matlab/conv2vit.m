@@ -11,17 +11,20 @@ traceback = 5 * 3;
 err_unc = zeros(size(EbNo));
 err_cod = zeros(size(EbNo));
 err_cod_our = zeros(size(EbNo));
+err_cod_soft = zeros(size(EbNo));
 for i = 1:length(EbNo)
 	data = randi([0, 1], N, 1);
 	for t = 1:trials
-	[eu, ec, eco] = sim_conv57(data, trel, traceback, EbNo(i));
-	err_unc(i) = err_unc(i) + eu;
-	err_cod(i) = err_cod(i) + ec;
-	err_cod_our(i) = err_cod_our(i) + eco;
+		[eu, ec, eco, ecs] = sim_conv57(data, trel, traceback, EbNo(i));
+		err_unc(i) = err_unc(i) + eu;
+		err_cod(i) = err_cod(i) + ec;
+		err_cod_our(i) = err_cod_our(i) + eco;
+		err_cod_soft(i) = err_cod_soft(i) + ecs;
 	end
 	err_unc(i) = err_unc(i) / trials;
 	err_cod(i) = err_cod(i) / trials;
 	err_cod_our(i) = err_cod_our(i) / trials;
+	err_cod_soft(i) = err_cod_soft(i) / trials;
 end
 
 % Plotting
@@ -30,12 +33,13 @@ hold on;
 semilogy(EbNo, err_unc, 'b-o', 'LineWidth', 2);
 semilogy(EbNo, err_cod, 'r-s', 'LineWidth', 2);
 semilogy(EbNo, err_cod_our, 'g-s', 'LineWidth', 2);
+semilogy(EbNo, err_cod_soft, 'r-s', 'LineWidth', 1);
 set(gca, 'YScale', 'log');
 hold off;
 grid on;
 xlabel('Eb/No');
 ylabel('Bit Error Rate');
-legend('Uncoded', 'Convolutional (vitdec)' , 'Convolutional (our)');
+legend('Uncoded', 'Hard (vitdec)' , 'Hard (our)', 'Soft (vitdec)');
 
 % Signal/Noise
 function snr = get_snr(trel, EbNo)
@@ -50,7 +54,7 @@ function snr = get_snr(trel, EbNo)
 	end
 end
 
-function [err_unc, err_cod, err_cod_our] = sim_conv57(data, trel, tb, EbNo)
+function [err_unc, err_cod, err_cod_our, err_cod_soft] = sim_conv57(data, trel, tb, EbNo)
 	% Generating random data
 	% 1. Uncoded
 	modulated = 2 * data - 1;
@@ -59,8 +63,10 @@ function [err_unc, err_cod, err_cod_our] = sim_conv57(data, trel, tb, EbNo)
 	% 2. Coded (3, 5-7)
 	data_conv = convenc(data, trel);
 	modulated_conv = 2 * data_conv - 1;
-	data_conv_noise = awgn(modulated_conv, get_snr(trel, EbNo));
-	data_conv_noise = data_conv_noise >= 0;
+	soft_values = awgn(modulated_conv, get_snr(trel, EbNo));
+	data_conv_noise = soft_values >= 0;
+	soft_quant = round((soft_values + 1) / 2 * 7);
+	soft_quant = max(0, min(7, soft_quant));
 	% Uncoded
 	err_unc = mean(data ~= data_noise);
 	% Coded
@@ -70,4 +76,7 @@ function [err_unc, err_cod, err_cod_our] = sim_conv57(data, trel, tb, EbNo)
 	data_padded = data;
 	data_conv_dec = conv57dechard(data_conv_noise);
 	err_cod_our = mean(data_padded' ~= data_conv_dec(3:end));
+	% Coded (soft)
+	data_conv_dec = vitdec(soft_quant, trel, tb, 'trunc', 'soft', 3);
+	err_cod_soft = mean(data ~= data_conv_dec);
 end
