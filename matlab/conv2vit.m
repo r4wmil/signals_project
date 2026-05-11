@@ -79,4 +79,12 @@ function [err_unc, err_cod, err_cod_our, err_cod_soft] = sim_conv57(data, trel, 
 	% Coded (soft)
 	data_conv_dec = vitdec(soft_quant, trel, tb, 'trunc', 'soft', 3);
 	err_cod_soft = mean(data ~= data_conv_dec);
+	assignin('base', 'data_check', data);
+	assignin('base', 'data_conv_dec', data_conv_dec);
 end
+
+% diff check (TODO: separate file)
+[eu, ec, eco, ecs] = sim_conv57(data, trel, traceback, 5);
+diff_pos = (data_check ~= data_conv_dec);
+[row, col] = find(diff_pos);
+row
