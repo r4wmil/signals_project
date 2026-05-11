@@ -4,7 +4,7 @@
 
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 	if (nrhs < 1) { mexErrMsgTxt("Input array required"); }
-	if (!mxIsLogical(prhs[0])) { mexErrMsgTxt("Input array must be double or complex"); }
+	if (!mxIsLogical(prhs[0])) { mexErrMsgTxt("Input array must be logical"); }
 	bool* inp = mxGetLogicals(prhs[0]);
 	size_t inp_len = (size_t)mxGetNumberOfElements(prhs[0]);
 	size_t out_len = DEC_LEN(inp_len);
