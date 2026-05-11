@@ -103,6 +103,8 @@ trel_t trel_init(size_t width, size_t height) {
 bool dec_hard(bool* d, size_t dl, trel_t* _trel, bool* o) {
 	trel_t trel = trel_init(dl / 2, 4);
 	trel.distance[0] = 0;
+	trel.distance[3] = 0;
+	trel.window[3] = 7;
 	for (size_t i = 0; i < trel.width - 1; i++) {
 		uint32_t curr = (d[(i + 1) * 2 + 0] << 1) | d[(i + 1) * 2 + 1];
 		for (uint32_t s = 0; s < trel.height; s++) {
