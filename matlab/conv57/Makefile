@@ -1,6 +1,6 @@
 mkdir:
 	mkdir -p ./out
 
-conv57: mkdir
-	gcc conv57main.c -o ./out/conv57main
-	./out/conv57main
+conv57_test_hard: mkdir
+	gcc conv57_test_hard.c -o ./out/conv57_test_hard
+	./out/conv57_test_hard
