@@ -20,7 +20,7 @@ typedef struct trel_t {
 
 typedef struct trel_soft_t {
 	uint32_t* window;
-	float* distance;
+	double* distance;
 	uint32_t* backtrack;
 	size_t width;
 	size_t height;
@@ -57,7 +57,7 @@ typedef struct trel_soft_t {
 void enc_hard(bool* d, size_t dl, bool* o);
 bool dec_no_err(bool* d, size_t dl, bool* o);
 bool dec_hard(bool* d, size_t dl, trel_t* trel, bool* o);
-bool dec_soft(float* d, size_t dl, trel_soft_t* _trel, bool* o);
+bool dec_soft(double* d, size_t dl, trel_soft_t* _trel, bool* o);
 
 #endif /* CONV57_H_ */
 
@@ -200,16 +200,16 @@ bool dec_hard(bool* d, size_t dl, trel_t* _trel, bool* o) {
 	return true;
 }
 
-bool dec_soft(float* d, size_t dl, trel_soft_t* _trel, bool* o) {
+bool dec_soft(double* d, size_t dl, trel_soft_t* _trel, bool* o) {
 	trel_soft_t trel = trel_soft_init(dl / 2, 4);
 	trel.distance[0] = 0;
 	trel.distance[3] = 0;
 	trel.window[3] = 7;
 	for (size_t i = 0; i < trel.width - 1; i++) {
 		//uint32_t curr = ((d[(i + 1) * 2 + 0] > 0) << 1) | (d[(i + 1) * 2 + 1] > 0);
-		float curr0 = d[(i + 1) * 2 + 0];
-		float curr1 = d[(i + 1) * 2 + 1];
-		float max_dist = FLT_MAX;
+		double curr0 = d[(i + 1) * 2 + 0];
+		double curr1 = d[(i + 1) * 2 + 1];
+		double max_dist = FLT_MAX;
 		for (uint32_t s = 0; s < trel.height; s++) {
 			size_t j = i * 2;
 			size_t k = i * trel.height + s;
@@ -221,9 +221,9 @@ bool dec_soft(float* d, size_t dl, trel_soft_t* _trel, bool* o) {
 			uint32_t c1 = (__builtin_parity(w1 & 0x5) << 1) | __builtin_parity(w1 & 0x7);
 			size_t k0 = (i + 1) * trel.height + (w0 & 0x3);
 			size_t k1 = (i + 1) * trel.height + (w1 & 0x3);
-			float n0 = trel.distance[k]
-				+ fabsf(curr0 - ((float)((c0 << 1) & 0x1) * 2 - 1))
-				+ fabsf(curr0 - ((float)((c0 << 0) & 0x1) * 2 - 1));
+			double n0 = trel.distance[k]
+				+ fabsf(curr0 - ((double)((c0 << 1) & 0x1) * 2 - 1))
+				+ fabsf(curr0 - ((double)((c0 << 0) & 0x1) * 2 - 1));
 			//printf("curr0=%f n0=%f\n", curr0, n0);
 			//uint32_t n0 = trel.distance[k] + __builtin_popcount(curr ^ c0);
 			//uint32_t n0 = trel.distance[k] + (curr != c0);
@@ -232,9 +232,9 @@ bool dec_soft(float* d, size_t dl, trel_soft_t* _trel, bool* o) {
 				trel.distance[k0] = n0;
 				trel.backtrack[k0] = s;
 			}
-			float n1 = trel.distance[k]
-				+ fabsf(curr1 - ((float)((c1 << 1) & 0x1) * 2 - 1))
-				+ fabsf(curr1 - ((float)((c1 << 0) & 0x1) * 2 - 1));
+			double n1 = trel.distance[k]
+				+ fabsf(curr1 - ((double)((c1 << 1) & 0x1) * 2 - 1))
+				+ fabsf(curr1 - ((double)((c1 << 0) & 0x1) * 2 - 1));
 			//printf("curr1=%f n1=%f\n", curr1, n1);
 			//uint32_t n1 = trel.distance[k] + __builtin_popcount(curr ^ c1);
 			//uint32_t n1 = trel.distance[k] + (curr != c1);

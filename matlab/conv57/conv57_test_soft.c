@@ -8,10 +8,10 @@ int main() {
 	LOG_BINARY(inp, inp_len);
 	const size_t enc_len = ENC_LEN(inp_len);
 	bool encb[enc_len];
-	float enc[enc_len];
+	double enc[enc_len];
 	enc_hard(inp, inp_len, encb);
 	for (size_t i = 0; i < enc_len; i++) {
-		enc[i] = 2.0f * (float)encb[i] - 1.0f;
+		enc[i] = 2.0f * (double)encb[i] - 1.0f;
 	}
 	LOG_BINARY(encb, enc_len);
 	enc[5] = +0.5;
