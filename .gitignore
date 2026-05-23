@@ -1,1 +1,3 @@
 out/
+*.mexw64
+*.asv

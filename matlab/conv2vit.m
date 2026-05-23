@@ -1,4 +1,4 @@
-addpath('conv57');
+addpath('out');
 
 % Input values
 N = 10000;
