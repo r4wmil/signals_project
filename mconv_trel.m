@@ -1,6 +1,14 @@
 function mtrel = mconv_trel(c, G)
     k = size(G, 1); % input bits
     n = size(G, 2); % output bits
+
+    % Convert G from Octal representation to Decimal values
+    for i = 1:k
+        for j = 1:n
+            G(i,j) = sscanf(num2str(G(i,j)), '%o');
+        end
+    end
+
     mtrel = struct();
     mtrel.numInpSym = 2 ^ k;
     mtrel.numOutSym = 2 ^ n;
@@ -21,7 +29,7 @@ function mtrel = mconv_trel(c, G)
             % Next state calculation
             nextState = bitshift(state, -k);
             for i = 1:k
-                nextState = nextState + bitshift(inputs(i), (c-1)*k - i*k + (c-1));
+                nextState = nextState + bitshift(inputs(i), (c-2)*k + (k-i));
             end
             mtrel.nextStates(state+1, inputSym+1) = nextState;
             
