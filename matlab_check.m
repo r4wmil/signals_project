@@ -11,3 +11,8 @@ function enc = check2d(data)
 end
 
 check2d([1 1 1 1])
+
+trel = poly2trellis(3, [5 7]);
+disp(trel);
+trel.nextStates
+trel.outputs
