@@ -2,7 +2,7 @@ function mtrel = mconv_trel(c, G)
     k = size(G, 1); % input bits
     n = size(G, 2); % output bits
 
-    % Convert G from Octal representation to Decimal values
+    % oct int -> int
     for i = 1:k
         for j = 1:n
             G(i,j) = sscanf(num2str(G(i,j)), '%o');
@@ -18,7 +18,7 @@ function mtrel = mconv_trel(c, G)
     
     for state = 0:mtrel.numStates-1
         for inputSym = 0:mtrel.numInpSym-1
-            % Get k input bits (LSB first convention)
+            % get k input bits
             inputs = zeros(1, k);
             temp = inputSym;
             for i = k:-1:1
@@ -26,20 +26,20 @@ function mtrel = mconv_trel(c, G)
                 temp = bitshift(temp, -1);
             end
             
-            % Next state calculation
+            % nextStates
             nextState = bitshift(state, -k);
             for i = 1:k
                 nextState = nextState + bitshift(inputs(i), (c-2)*k + (k-i));
             end
             mtrel.nextStates(state+1, inputSym+1) = nextState;
             
-            % Register contents: old state + new inputs
+            % [ new_inp_arr | old_states ]
             reg = state;
             for i = 1:k
                 reg = reg + bitshift(inputs(i), (c-1)*k - (i-1)*k);
             end
             
-            % Output calculation
+            % outputs
             out = 0;
             for j = 1:n
                 parity = 0;
