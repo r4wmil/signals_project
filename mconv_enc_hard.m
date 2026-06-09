@@ -1,4 +1,4 @@
-function enc = mconv_enc_hard1(data, trel)
+function enc = mconv_enc_hard(data, trel)
    
     k = round(log2(trel.numInpSym));
     n = round(log2(trel.numOutSym));
@@ -35,6 +35,3 @@ function enc = mconv_enc_hard1(data, trel)
         state = trel.nextStates(state+1, inputSym+1);
     end
 end
-
-trel = mconv_trel(3, [5 7]);
-mconv_enc_hard1([1 0 1 1], trel)
