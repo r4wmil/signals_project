@@ -1,4 +1,4 @@
-function enc = mconv_enc_hard(data, trel)
+function enc = mconv_enc(data, trel)
    
     k = round(log2(trel.numInpSym));
     n = round(log2(trel.numOutSym));

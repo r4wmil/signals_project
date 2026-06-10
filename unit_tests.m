@@ -14,7 +14,7 @@ function ut_enc_hard(constr_len, gen, data)
         constr_len, mat2str(gen), mat2str(data));
     
     trel = mconv_trel(constr_len, gen);
-    enc_our = mconv_enc_hard(data, trel);
+    enc_our = mconv_enc(data, trel);
     
     % Verify against MATLAB's convenc if available
     try
