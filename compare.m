@@ -1,9 +1,9 @@
 addpath('out');
 
 % Input values
-N = 500;
+N = 1000;
 EbNo = 0:1:8; % Energy/bit to noise power
-trialsPerEbNo = 10;
+trialsPerEbNo = 20;
 trel = poly2trellis(3, [5 7]);
 trelo = mconv_trel(3, [5 7]);
 traceback = 5 * 3;
