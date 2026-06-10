@@ -7,6 +7,45 @@ function unit_tests
     ut_enc_hard(4, [13 17], randi([0 1], 1, 20));
     ut_enc_hard(3, [5 7], 0);
     ut_enc_hard(3, [5 7], 1);
+    ut_dec_hard(3, [5 7], [1 0 1 1 0]);
+    ut_dec_hard(3, [5 7 5], [1 0 1 1 0]);
+    ut_dec_hard(4, [13 17], randi([0 1], 1, 20));
+    ut_dec_hard(3, [5 7], 0);
+    ut_dec_hard(3, [5 7], 1);
+end
+
+function ut_dec_hard(constr_len, gen, data)
+    fprintf('\n=== Decoder Test (Clean): constr_len=%d, gen=%s, data=%s ===\n', ...
+        constr_len, mat2str(gen), mat2str(data));
+    
+    trel = mconv_trel(constr_len, gen);
+    enc_our = mconv_enc(data, trel);
+    dec_our = mconv_dec_hard(enc_our, trel);
+    
+    % Verify against MATLAB's vitdec if available
+    try
+        trel_matlab = poly2trellis(constr_len, gen);
+        % tblen = length(data) is used for 'trunc' mode to match full-sequence traceback
+        dec_matlab = vitdec(enc_our, trel_matlab, length(data), 'trunc', 'hard');
+        
+        % Validate both against the original input and MATLAB's decoder
+        if isequal(dec_our, data) && isequal(dec_our, dec_matlab')
+            fprintf('✓ PASSED (Matches original and MATLAB)\n');
+        else
+            fprintf('✗ FAILED\n');
+            fprintf('  Original data: '); disp(data);
+            fprintf('  Our decoder:   '); disp(dec_our);
+            fprintf('  MATLAB decoder:'); disp(dec_matlab');
+        end
+    catch
+        if isequal(dec_our, data)
+            fprintf('✓ PASSED (Decoded back to original data)\n');
+        else
+            fprintf('✗ FAILED\n');
+            fprintf('  Original data: '); disp(data);
+            fprintf('  Our decoder:   '); disp(dec_our);
+        end
+    end
 end
 
 function ut_enc_hard(constr_len, gen, data)
