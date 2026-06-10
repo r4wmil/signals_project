@@ -1,24 +1,28 @@
 addpath('out');
 
 % Input values
-N = 10000;
+N = 500;
 EbNo = 0:1:8; % Energy/bit to noise power
-trialsPerEbNo = 30;
+trialsPerEbNo = 10;
 trel = poly2trellis(3, [5 7]);
+trelo = mconv_trel(3, [5 7]);
 traceback = 5 * 3;
 
 % Simulating
 eu_a = zeros(size(EbNo)); % Errors uncoded
 ec_a = zeros(size(EbNo)); % Errors coded
+eco_a = zeros(size(EbNo)); % Errors coded, our
 for i = 1:length(EbNo)
 	data = randi([0, 1], N, 1);
 	for t = 1:trialsPerEbNo
-		[eu, ec] = sim_conv57(data, trel, traceback, EbNo(i));
+		[eu, ec, eco] = sim_conv57(data, trel, trelo, traceback, EbNo(i));
 		eu_a(i) = eu_a(i) + eu;
 		ec_a(i) = ec_a(i) + ec;
+        eco_a(i) = eco_a(i) + eco;
 	end
 	eu_a(i) = eu_a(i) / trialsPerEbNo;
 	ec_a(i) = ec_a(i) / trialsPerEbNo;
+    eco_a(i) = eco_a(i) / trialsPerEbNo;
 end
 
 % Plotting
@@ -27,6 +31,7 @@ figure;
 hold on;
 semilogy(EbNo, eu_a, 'b-o', 'LineWidth', 2);
 semilogy(EbNo, ec_a, 'r-s', 'LineWidth', 2);
+semilogy(EbNo, eco_a, 'r-s', 'LineWidth', 1);
 set(gca, 'YScale', 'log');
 grid on;
 
@@ -47,7 +52,7 @@ function snr = get_snr(trel, EbNo)
 	end
 end
 
-function [eu, ec] = sim_conv57(data, trel, tb, EbNo)
+function [eu, ec, eco] = sim_conv57(data, trel, trelo, tb, EbNo)
 	% Generating random data
 	% 1. Uncoded
 	mod = 2 * data - 1;
@@ -62,7 +67,10 @@ function [eu, ec] = sim_conv57(data, trel, tb, EbNo)
 	%soft_quant = max(0, min(7, soft_quant));
 	% Uncoded
 	eu = mean(data ~= data_unc_noise);
-	% Coded
+	% Coded (hard, matlab)
 	data_conv_dec = vitdec(hard_conv_noise, trel, tb, 'trunc', 'hard');
 	ec = mean(data ~= data_conv_dec);
+    % Coded (hard, our)
+	data_conv_dec = mconv_dec_hard(hard_conv_noise, trelo);
+	eco = mean(data ~= data_conv_dec');
 end

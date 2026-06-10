@@ -1,5 +1,10 @@
 function dec = mconv_dec_hard(data, trel)
     
+    is_col = (size(data, 2) == 1);
+    if is_col
+        data = data.';
+    end
+
     k = round(log2(trel.numInpSym));
     n = round(log2(trel.numOutSym));
     numStates = trel.numStates;
