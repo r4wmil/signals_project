@@ -1,6 +1,6 @@
 all: mkdir
-	gcc hard_tests.c -o ./out/hard_tests
-	./out/hard_tests
+	gcc tests.c -o ./out/tests
+	./out/tests
 
 mkdir:
 	mkdir -p out
