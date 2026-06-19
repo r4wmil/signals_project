@@ -1,11 +1,11 @@
 addpath('out');
 
 % Input values
-N = 1000;
-EbNo = 0:1:8; % Energy/bit to noise power
-trialsPerEbNo = 20;
-trel = poly2trellis(3, [5 7]);
-trelo = mconv_trel(3, [5 7]);
+N = 200;
+EbNo = 0:0.5:5; % Energy/bit to noise power
+trialsPerEbNo = 30;
+trel = poly2trellis(7, [171 133]);
+trelo = mconv_trel(7, [171 133]);
 traceback = 5 * 3;
 
 % Simulating
