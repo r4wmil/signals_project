@@ -17,6 +17,7 @@ typedef struct conv_trel_t {
 } conv_trel_t;
 
 conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n);
+size_t conv_get_enc_len(conv_trel_t trel, size_t ilen);
 
 #endif /* CONV_H_ */
 
@@ -44,5 +45,11 @@ conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n) {
 	}
 	return t;
 }
+
+size_t conv_get_enc_len(conv_trel_t trel, size_t ilen) {
+	return ilen * trel.n;
+}
+
+// HERE
 
 #endif /* CONV_IMPLEMENTATION */
