@@ -38,7 +38,7 @@ void ut_enc(size_t c, uint32_t* gen, size_t len,
 	uint64_t* N,
 	uint64_t* O,
 	bool* inp, size_t ilen,
-	bool* exp, size_t iexp) {
+	bool* exp, size_t elen) {
 	conv_trel_t t = conv_trel_gen(c, gen, len);
 	assert(t.c == c);
 	assert(t.k == k);
@@ -49,8 +49,11 @@ void ut_enc(size_t c, uint32_t* gen, size_t len,
 	assert(t.O);
 	for (size_t i = 0; i < t.s * t.is; i++) { assert(N[i] == t.N[i]); }
 	for (size_t i = 0; i < t.s * t.is; i++) { assert(O[i] == t.O[i]); }
-	size_t iout = conv_get_enc_len(t, ilen);
-	assert(iout == iexp);
+	size_t olen = conv_get_enc_len(t, ilen);
+	assert(olen == elen);
+	bool* out = calloc(olen, sizeof(*out));
+	conv_enc(t, inp, ilen, olen, out);
+	for (size_t i = 0; i < olen; i++) { assert(exp[i] == out[i]); }
 }
 
 int main(int argc, char** argv) {

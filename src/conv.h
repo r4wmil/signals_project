@@ -18,6 +18,7 @@ typedef struct conv_trel_t {
 
 conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n);
 size_t conv_get_enc_len(conv_trel_t trel, size_t ilen);
+size_t conv_enc(conv_trel_t trel, bool* inp, size_t ilen, size_t olen, bool* out);
 
 #endif /* CONV_H_ */
 
@@ -48,6 +49,20 @@ conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n) {
 
 size_t conv_get_enc_len(conv_trel_t trel, size_t ilen) {
 	return ilen * trel.n;
+}
+
+size_t conv_enc(conv_trel_t trel, bool* inp, size_t ilen, size_t olen, bool* out) {
+	size_t state = 0;
+	size_t outi = 0;
+	for (size_t i = 0; i < ilen; i++) {
+		size_t tbli = state * trel.is + inp[i];
+		uint64_t tblo = trel.O[tbli];
+		for (size_t b = 0; b < trel.n; b++) {
+			out[outi++] = (tblo >> (trel.n - b - 1)) & 0x1;
+		}
+		state = trel.N[tbli];
+	}
+	return outi;
 }
 
 // HERE
