@@ -1,28 +1,36 @@
 addpath('out');
 
 % Input values
-N = 200;
+N = 3000;
 EbNo = 0:0.5:5; % Energy/bit to noise power
-trialsPerEbNo = 30;
+trialsPerEbNo = 50;
 trel = poly2trellis(7, [171 133]);
-trelo = mconv_trel(7, [171 133]);
-traceback = 5 * 3;
+c = 7;
+G = [121 91];
+traceback = 15;
 
 % Simulating
-eu_a = zeros(size(EbNo)); % Errors uncoded
-ec_a = zeros(size(EbNo)); % Errors coded
-eco_a = zeros(size(EbNo)); % Errors coded, our
+eu_a  = zeros(size(EbNo)); % Errors uncoded
+ech_a = zeros(size(EbNo)); % Errors coded hard (vitdec)
+eco_a = zeros(size(EbNo)); % Errors coded hard (mex)
+ecs_a = zeros(size(EbNo)); % Errors coded soft (vitdec)
+ecos_a = zeros(size(EbNo)); % Errors coded soft (mex)
+
 for i = 1:length(EbNo)
 	data = randi([0, 1], N, 1);
 	for t = 1:trialsPerEbNo
-		[eu, ec, eco] = sim_conv57(data, trel, trelo, traceback, EbNo(i));
-		eu_a(i) = eu_a(i) + eu;
-		ec_a(i) = ec_a(i) + ec;
-        eco_a(i) = eco_a(i) + eco;
+		[eu, ech, eco, ecs, ecos] = sim_conv57(data, trel, traceback, EbNo(i));
+		eu_a(i)   = eu_a(i) + eu;
+		ech_a(i)  = ech_a(i) + ech;
+		eco_a(i)  = eco_a(i) + eco;
+		ecs_a(i)  = ecs_a(i) + ecs;
+		ecos_a(i) = ecos_a(i) + ecos;
 	end
-	eu_a(i) = eu_a(i) / trialsPerEbNo;
-	ec_a(i) = ec_a(i) / trialsPerEbNo;
-    eco_a(i) = eco_a(i) / trialsPerEbNo;
+	eu_a(i)   = eu_a(i) / trialsPerEbNo;
+	ech_a(i)  = ech_a(i) / trialsPerEbNo;
+	eco_a(i)  = eco_a(i) / trialsPerEbNo;
+	ecs_a(i)  = ecs_a(i) / trialsPerEbNo;
+	ecos_a(i) = ecos_a(i) / trialsPerEbNo;
 end
 
 % Plotting
@@ -30,8 +38,10 @@ figure;
 
 hold on;
 semilogy(EbNo, eu_a, 'b-o', 'LineWidth', 2);
-semilogy(EbNo, ec_a, 'r-s', 'LineWidth', 2);
-semilogy(EbNo, eco_a, 'r-s', 'LineWidth', 1);
+semilogy(EbNo, ech_a, 'r-s', 'LineWidth', 2);
+semilogy(EbNo, eco_a, 'r--x', 'LineWidth', 1);
+semilogy(EbNo, ecs_a, 'g-d', 'LineWidth', 2);
+semilogy(EbNo, ecos_a, 'g--+', 'LineWidth', 1);
 set(gca, 'YScale', 'log');
 grid on;
 
@@ -52,25 +62,36 @@ function snr = get_snr(trel, EbNo)
 	end
 end
 
-function [eu, ec, eco] = sim_conv57(data, trel, trelo, tb, EbNo)
+function [eu, ech, eco, ecs, ecos] = sim_conv57(data, trel, tb, EbNo)
+    global c G
 	% Generating random data
 	% 1. Uncoded
 	mod = 2 * data - 1;
 	mod_unc_noise = awgn(mod, get_snr(0, EbNo));
 	data_unc_noise = mod_unc_noise >= 0;
+	
 	% 2. Coded (3, 5-7)
 	data_conv = convenc(data, trel);
 	mod_conv = 2 * data_conv - 1;
 	mod_conv_noise = awgn(mod_conv, get_snr(trel, EbNo));
 	hard_conv_noise = mod_conv_noise >= 0;
-	%soft_quant = round((mod_conv_noise + 1) / 2 * 7);
-	%soft_quant = max(0, min(7, soft_quant));
+	
 	% Uncoded
 	eu = mean(data ~= data_unc_noise);
+	
 	% Coded (hard, matlab)
 	data_conv_dec = vitdec(hard_conv_noise, trel, tb, 'trunc', 'hard');
-	ec = mean(data ~= data_conv_dec);
-    % Coded (hard, our)
-	data_conv_dec = mconv_dec_hard(hard_conv_noise, trelo);
-	eco = mean(data ~= data_conv_dec');
+	ech = mean(data ~= data_conv_dec);
+	
+	% Coded (hard, our MEX) - Converting octal [171 133] to decimal [121 91]
+	dec_mex_hard = conv_mex('hard', c, G, 2, logical(hard_conv_noise));
+	eco = mean(data ~= dec_mex_hard.');
+	
+	% Coded (soft, matlab) - Note: vitdec unquantized expects inverted sign metrics
+	data_conv_soft = vitdec(-mod_conv_noise, trel, tb, 'trunc', 'unquant');
+	ecs = mean(data ~= data_conv_soft);
+	
+	% Coded (soft, our MEX)
+	dec_mex_soft = conv_mex('soft', c, G, 2, single(-mod_conv_noise));
+	ecos = mean(data ~= dec_mex_soft.');
 end
