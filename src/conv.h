@@ -16,6 +16,8 @@ typedef struct conv_trel_t {
 	uint64_t* O; // outputs
 } conv_trel_t;
 
+conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n);
+
 #endif /* CONV_H_ */
 
 #ifdef CONV_IMPLEMENTATION
@@ -28,15 +30,16 @@ conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n) {
 	t.is = 0x1 << t.k;
 	t.os = 0x1 << t.n;
 	t.s = 0x1 << ((t.c - 1) * t.k);
-	t.N = malloc(t.s * t.is * sizeof(*t.N));
-	t.O = malloc(t.s * t.is * sizeof(*t.O));
+	t.N = calloc(t.s * t.is, sizeof(*t.N));
+	t.O = calloc(t.s * t.is, sizeof(*t.O));
 	for (size_t s = 0; s < t.s; s++) {
 		for (size_t i = 0; i < t.is; i++) {
 			t.N[s * t.is + i] = (s >> t.k) | (i << ((t.c - 2) * t.k));
-			t.O[s * t.is + i] = 0;
-			//for (size_t g = 0; g < len; g++) {
-			//	t.O[s * t.is + i] = G[g];
-			//}
+			uint64_t r = s | (i << ((t.c - 2) * t.k + 1));
+			for (size_t g = 0; g < n; g++) {
+				t.O[s * t.is + i] <<= 1;
+				t.O[s * t.is + i] |= __builtin_parity(r & G[g]);
+			}
 		}
 	}
 	return t;
