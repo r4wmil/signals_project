@@ -1,16 +1,12 @@
 # Viterby Decoder 
 
-## Versions
-`mconv` - MATLAB implementation
-`conv57` - old C implementation
-`conv57_tests` - tests for old C implementation
+## Запуск сравнения
+```
+mex src/conv_mex.c
+compare
+```
 
-## mconv
-TODO: how to use
-
-## C version
-TODO: ...
+## Установка компилятора (MINGW) для MEX
 ```
 setenv('MW_MINGW64_LOC', 'C:\mingw64')
-conv57_impl_test
 ```
