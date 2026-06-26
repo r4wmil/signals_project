@@ -19,6 +19,7 @@ typedef struct conv_trel_t {
 conv_trel_t conv_trel_gen(size_t c, uint32_t* G, size_t n);
 size_t conv_get_enc_len(conv_trel_t trel, size_t ilen);
 size_t conv_enc(conv_trel_t trel, bool* inp, size_t ilen, size_t olen, bool* out);
+void conv_hard(conv_trel_t trel, bool* inp, size_t ilen, bool* out);
 
 #endif /* CONV_H_ */
 
@@ -52,6 +53,7 @@ size_t conv_get_enc_len(conv_trel_t trel, size_t ilen) {
 }
 
 size_t conv_enc(conv_trel_t trel, bool* inp, size_t ilen, size_t olen, bool* out) {
+	// TODO: remove olen & return nothing
 	size_t state = 0;
 	size_t outi = 0;
 	for (size_t i = 0; i < ilen; i++) {
@@ -65,6 +67,58 @@ size_t conv_enc(conv_trel_t trel, bool* inp, size_t ilen, size_t olen, bool* out
 	return outi;
 }
 
-// HERE
+void conv_hard(conv_trel_t trel, bool* inp, size_t ilen, bool* out) {
+	size_t steps = ilen / trel.n;
+	size_t* path = malloc(trel.s * steps * sizeof(*path));
+	uint32_t* metrics = malloc(trel.s * sizeof(*metrics));
+	uint32_t* next_metrics = malloc(trel.s * sizeof(*next_metrics));
+
+	for (size_t s = 1; s < trel.s; s++) metrics[s] = 1e9;
+	metrics[0] = 0;
+
+	for (size_t t = 0; t < steps; t++) {
+		for (size_t s = 0; s < trel.s; s++) next_metrics[s] = 1e9;
+
+		for (size_t s = 0; s < trel.s; s++) {
+			if (metrics[s] >= 1e9) continue;
+			for (size_t i = 0; i < trel.is; i++) {
+				size_t idx = s * trel.is + i;
+				size_t next_s = trel.N[idx];
+				uint64_t tblo = trel.O[idx];
+
+				uint32_t dist = 0;
+				for (size_t b = 0; b < trel.n; b++) {
+					bool bit = (tblo >> (trel.n - b - 1)) & 0x1;
+					dist += (bit != inp[t * trel.n + b]);
+				}
+
+				uint32_t cost = metrics[s] + dist;
+				if (cost < next_metrics[next_s]) {
+					next_metrics[next_s] = cost;
+					path[t * trel.s + next_s] = s;
+				}
+			}
+		}
+		uint32_t* tmp = metrics; metrics = next_metrics; next_metrics = tmp;
+	}
+
+	size_t best_s = 0;
+	for (size_t s = 1; s < trel.s; s++) {
+		if (metrics[s] < metrics[best_s]) best_s = s;
+	}
+
+	for (size_t t = steps; t > 0; t--) {
+		size_t prev_s = path[(t - 1) * trel.s + best_s];
+		for (size_t i = 0; i < trel.is; i++) {
+			if (trel.N[prev_s * trel.is + i] == best_s) {
+				out[t - 1] = i;
+				break;
+			}
+		}
+		best_s = prev_s;
+	}
+
+	free(path); free(metrics); free(next_metrics);
+}
 
 #endif /* CONV_IMPLEMENTATION */
