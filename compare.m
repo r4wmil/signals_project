@@ -83,11 +83,11 @@ function [eu, ech, eco, ecs, ecos] = sim_conv57(data, trel, tb, EbNo)
 	data_conv_dec = vitdec(hard_conv_noise, trel, tb, 'trunc', 'hard');
 	ech = mean(data ~= data_conv_dec);
 	
-	% Coded (hard, our MEX) - Converting octal [171 133] to decimal [121 91]
+	% Coded (hard, our MEX)
 	dec_mex_hard = conv_mex('hard', c, G, 2, logical(hard_conv_noise));
 	eco = mean(data ~= dec_mex_hard.');
 	
-	% Coded (soft, matlab) - Note: vitdec unquantized expects inverted sign metrics
+	% Coded (soft, matlab)
 	data_conv_soft = vitdec(-mod_conv_noise, trel, tb, 'trunc', 'unquant');
 	ecs = mean(data ~= data_conv_soft);
 	
