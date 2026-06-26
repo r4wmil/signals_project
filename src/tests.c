@@ -87,7 +87,7 @@ void ut_soft(size_t c, uint32_t* gen, size_t len,
 	uint64_t* N,
 	uint64_t* O,
 	float* inp, size_t ilen,
-	bool* exp) {
+	bool* exp, size_t elen) {
 	conv_trel_t t = conv_trel_gen(c, gen, len);
 	assert(t.c == c);
 	assert(t.k == k);
@@ -98,14 +98,20 @@ void ut_soft(size_t c, uint32_t* gen, size_t len,
 	assert(t.O);
 	for (size_t i = 0; i < t.s * t.is; i++) { assert(N[i] == t.N[i]); }
 	for (size_t i = 0; i < t.s * t.is; i++) { assert(O[i] == t.O[i]); }
-	size_t blen = conv_get_enc_len(t, ilen);
-	bool* out = calloc(ilen, sizeof(*out));
-	conv_soft(t, inp, blen, out);
-	for (size_t i = 0; i < ilen; i++) {
+	
+	// Pass ilen directly to conv_soft since it represents the float array length
+	bool* out = calloc(elen, sizeof(*out));
+	conv_soft(t, inp, ilen, out);
+	
+	for (size_t i = 0; i < elen; i++) {
 		printf("%d == %d\n", exp[i], out[i]);
 		//assert(exp[i] == out[i]);
 	}
-	//TODO: frees for each test
+	
+	// Optional frees for this test run
+	free(t.N);
+	free(t.O);
+	free(out);
 }
 
 int main(int argc, char** argv) {
@@ -133,7 +139,7 @@ int main(int argc, char** argv) {
 		2, 4, 4,
 		(uint64_t[]){0,2,0,2,1,3,1,3},
 		(uint64_t[]){0,3,3,0,1,2,2,1},
-		(float[]){+1.0,+1.0,-1.0,+1.0}, 4,
-		(bool[]){1,1,0,1});
+		(float[]){-0.8,-0.6, +0.1,+1.3, -2.0,+0.9, +1.0,+0.3}, 8,
+		(bool[]){1,1,0,1}, 4);
 	return 0;
 }

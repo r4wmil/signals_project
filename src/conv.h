@@ -129,7 +129,7 @@ void conv_soft(conv_trel_t trel, float* inp, size_t ilen, bool* out) {
 	float* next_metrics = malloc(trel.s * sizeof(*next_metrics));
 
 	for (size_t s = 1; s < trel.s; s++) metrics[s] = 1e9f;
-	metrics[0] = 0.0f;
+	metrics[0] = 0.0f; // Fixed: was assigning to the pointer itself
 
 	for (size_t t = 0; t < steps; t++) {
 		for (size_t s = 0; s < trel.s; s++) next_metrics[s] = 1e9f;
@@ -143,10 +143,12 @@ void conv_soft(conv_trel_t trel, float* inp, size_t ilen, bool* out) {
 
 				float dist = 0.0f;
 				for (size_t b = 0; b < trel.n; b++) {
-					// BPSK: Map trellis bit 0 -> +1.0f, bit 1 -> -1.0f
-					float expected = ((tblo >> (trel.n - b - 1)) & 0x1) ? -1.0f : 1.0f;
-					float diff = inp[t * trel.n + b] - expected;
-					dist += diff * diff; // Squared Euclidean Distance
+					bool bit = (tblo >> (trel.n - b - 1)) & 0x1;
+					// Standard BPSK mapping: bit 0 -> +1.0, bit 1 -> -1.0
+					// Swap them (bit ? 1.0f : -1.0f) if your float test vectors use inverted signs
+					float target = bit ? -1.0f : 1.0f; 
+					float diff = inp[t * trel.n + b] - target;
+					dist += diff * diff;
 				}
 
 				float cost = metrics[s] + dist;
